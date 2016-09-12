@@ -1,0 +1,96 @@
+#include <SPI.h>
+#include <Adb.h>
+Connection * connection;
+
+//uint8_t dataOld[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+void slideWrite(int pin, int valNew, int valOld = 0, int slideTime = 1000, int stepsCount = 5)
+{
+//  int valOld = analogRead(pin);
+  int stepAdd = (valOld - valNew) / stepsCount;
+  
+  for (int i=1; i<=stepsCount; i++){
+    if (i<stepsCount) {
+      analogWrite(pin, valOld + (i * stepAdd));
+    } else {
+      analogWrite(pin, valNew);
+    }
+    delay(slideTime / stepsCount);
+    
+  }
+};
+
+void adbEventHandler(Connection * connection, adb_eventType event, uint16_t length, uint8_t * data)
+{
+  if (event == ADB_CONNECTION_RECEIVE)
+  {
+//    Serial.println("ok from arduino");
+    for (int pin=0; pin<=53; pin++)
+    {
+      byte val = data[pin];
+
+      if (pin > 14 || val == 0)
+      {
+        digitalWrite(pin, val);
+      } else if (pin > 1) 
+      {
+        if (val > 10) {
+          analogWrite(pin, val);
+        } else {
+          /*if (val > 0)*/ val = 215 + val*4;
+          analogWrite(pin, val);
+        }
+      };
+//      slideWrite(pin, val, dataOld[i]);
+//      dataOld[i] = val;
+    }
+  }
+}
+ 
+void setup()
+{
+/*  pinMode(13,OUTPUT);//pwm for left front motor
+  pinMode(12,OUTPUT);//pwm for left back motor
+  pinMode(11,OUTPUT);//pwm for right front motor 
+  pinMode(10,OUTPUT);//pwm for right back motor  
+  pinMode(9,OUTPUT);//pwm for left and right hands motors  
+  pinMode(4,OUTPUT);//pwm for left and right hands manipulators motors  
+
+  pinMode(22,OUTPUT);//rel for left motors -> front  
+  pinMode(23,OUTPUT);//rel for left motors -> back  
+  pinMode(24,OUTPUT);//rel for right motors -> front   
+  pinMode(25,OUTPUT);//rel for right motors -> back  
+
+  pinMode(26,OUTPUT);//rel for left hand -> up  
+  pinMode(27,OUTPUT);//rel for left hand -> down  
+  pinMode(28,OUTPUT);//rel for right hand -> up  
+  pinMode(29,OUTPUT);//rel for right hand -> down  
+*/  
+
+  pinMode(30,OUTPUT);//rel for left hand manipulator -> open  
+  pinMode(31,OUTPUT);//rel for left hand manipulator -> close  
+  pinMode(32,OUTPUT);//rel for right hand manipulator -> open  
+  pinMode(33,OUTPUT);//rel for right hand manipulator -> close  
+  
+/*
+  for (int i=0; i<54; i++){
+    dataOld[i] = 0;
+  }
+*/
+//pwm         rel1    rel2
+//13,12,11,10 9,8,7,6 5,4,3,2
+//(Timers 3, 4, 5  Oddly do not use the divisors the data sheet says: Below are actual measured values!)
+  TCCR0B = (TCCR0B & 0xF8) | 0x01; //pin 4,13  PWM = 31KHz 
+  TCCR1B = (TCCR1B & 0xF8) | 0x01; //pin 11,12 PWM = 31KHz 
+  TCCR2B = (TCCR2B & 0xF8) | 0x01; //pin 9,10  PWM = 31KHz 
+//  TCCR3B = (TCCR3B & 0xF8) | 0x01; //pin 2,3,5 PWM = 31KHz 
+//  TCCR4B = (TCCR4B & 0xF8) | 0x01; //pin 6,7,8 PWM = 31KHz 
+//  TCCR5B = (TCCR5B & 0xF8) | 0x01; //pin 44,45,46 PWM = 31KHz 
+  ADB::init();
+  connection = ADB::addConnection("tcp:4568", true, adbEventHandler);  
+}
+ 
+void loop()
+{
+  ADB::poll();
+}
