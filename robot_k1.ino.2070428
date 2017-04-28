@@ -1,9 +1,34 @@
 #include <SPI.h>
-#include "Ultrasonic.h"
+//#include <Adb.h>
+//#include "Ultrasonic.h"
 
-Ultrasonic ultrasonic1(34,35);
-Ultrasonic ultrasonic2(36,37);
+//Connection * connection;
+//Ultrasonic ultrasonic(34,35);
+//Ultrasonic ultrasonic2(36,37);
+/*
+void adbEventHandler(Connection * connection, adb_eventType event, uint16_t length, uint8_t * data)
+{
+  if (event == ADB_CONNECTION_RECEIVE)
+  {
+    for (int pin=0; pin<=53; pin++)
+    {
+      byte val = data[pin];
 
+      if (pin > 14 || val == 0)
+      {
+        digitalWrite(pin, val);
+      } else if (pin > 1) 
+      {
+        if (val > 10) {
+          analogWrite(pin, val);
+        } else {
+          analogWrite(pin, val);
+        }
+      };
+    }
+  }
+}
+*/ 
 void setup()
 {
   Serial.begin(9600);
@@ -38,6 +63,8 @@ void setup()
 
   setupBlueToothConnection();
 
+//  ADB::init();
+//  connection = ADB::addConnection("tcp:4568", true, adbEventHandler);  
 }
  
 void loop()
@@ -62,13 +89,18 @@ void loop()
 	}
   }
   Serial1.flush();
-  
-  long rating1 = ultrasonic1.Ranging(CM);
+/*  
+  long rating = ultrasonic.Ranging(CM);
   long rating2 = ultrasonic2.Ranging(CM);
-  String myString = String(rating1) + "," + String(rating2);
-  Serial.println(myString);
-  Serial1.println(myString);
-  
+  if ((rating > 0 && rating < 10 && digitalRead(22) == HIGH && digitalRead(24) == HIGH) 
+  ||  (rating2 > 0 && rating2 < 10 && digitalRead(23) == HIGH && digitalRead(25) == HIGH)
+  ) {
+	for (int pin=0; pin<=53; pin++)	{
+		digitalWrite(pin, LOW);
+	}
+  }
+*/  
+//  ADB::poll();
 }
 
 void setupBlueToothConnection()
@@ -84,4 +116,3 @@ void setupBlueToothConnection()
   Serial1.flush();
 
 }
-
