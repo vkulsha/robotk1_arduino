@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include "Ultrasonic.h"
 
-//Ultrasonic ultrasonic1(34,35);
-//Ultrasonic ultrasonic2(36,37);
+Ultrasonic ultrasonic1(34,35);
+Ultrasonic ultrasonic2(36,37);
 
 void setup()
 {
@@ -22,17 +22,6 @@ void setup()
   pinMode(36,OUTPUT);
   pinMode(37,INPUT);
   
-/*  
-  pinMode(26,OUTPUT);//rel for left hand 2016
-  pinMode(27,OUTPUT);//rel for left hand 2016
-  pinMode(28,OUTPUT);//rel for right hand 2016
-  pinMode(29,OUTPUT);//rel for right hand 2016
-
-  pinMode(30,OUTPUT);//rel for left hand manipulator -> open  
-  pinMode(31,OUTPUT);//rel for left hand manipulator -> close  
-  pinMode(32,OUTPUT);//rel for right hand manipulator -> open  
-  pinMode(33,OUTPUT);//rel for right hand manipulator -> close  
-*/  
 //pwm         rel1    rel2
 //13,12,11,10 9,8,7,6 5,4,3,2
 //(Timers 3, 4, 5  Oddly do not use the divisors the data sheet says: Below are actual measured values!)
@@ -46,51 +35,20 @@ void setup()
   setupBlueToothConnection();
 
 }
- 
+
 void loop()
 {
-    digitalWrite(34, LOW);
-    delayMicroseconds(2);
-    digitalWrite(34, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(34, LOW);
-    long rating1 = pulseIn(35,HIGH);
-  
-    digitalWrite(36, LOW);
-    delayMicroseconds(2);
-    digitalWrite(36, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(36, LOW);
-    long rating2 = pulseIn(37,HIGH);
-  
-    //byte ratings[2]; 
-    //String myString = getS(String(rating1/29/2)) + "," + getS(String(rating2/29/2));
-    String myString = String(rating1/29/2) + "," + String(rating2/29/2);
-    //Serial.println(myString);
-    Serial1.println(myString);
-    /*int val;
-    val = rating1/29/2;
-    //if (val > 127) {val = 127;};
-    ratings[0] = val;
-    val = rating2/29/2;
-    //if (val > 127) {val = 127;};
-    ratings[1] = val;
-    Serial1.write(ratings,2);
-    */
-    Serial1.flush();
-  
 }
-
-String getS(String str) {
-  if (str.length() == 1) {
-    return "000"+str;
-  } else if (str.length() == 2) {
-    return "00"+str;
-  } else if (str.length() == 3) {
-    return "0"+str;
-  } else {
-    return str;
-  }
+ 
+void sonar()
+{
+    long rating1 = ultrasonic1.Ranging(CM);
+    long rating2 = ultrasonic2.Ranging(CM);
+    String myString = String(rating1) + "," + String(rating2);
+    Serial1.println(myString);
+    Serial1.flush();
+    delay(100);
+  
 }
 
 void setupBlueToothConnection()
@@ -104,30 +62,26 @@ void setupBlueToothConnection()
   Serial1.print("\r\n+INQ=1\r\n");                // make the slave bluetooth inquirable
   delay(2000);                                            // This delay is required. 
   Serial1.flush();
-
 }
 
 void getdata() 
 {
     if (Serial1.available() == 54 && Serial1.peek() == 0){
-  	for (volatile int pin=0; pin<=53; pin++)
-  	{
-  	  byte volatile val = Serial1.read();
-            if (pin == 18 || pin == 19 || pin == 34 || pin == 35 || pin == 36 || pin == 37) { continue; }
-  
-  	  if (pin > 14 || val == 0)
-  	  {
-  		digitalWrite(pin, val);
-  	  } else if (pin > 1) 
-  	  {
-  		if (val > 10) {
-  		  analogWrite(pin, val);
-  		} else {
-  		  /*if (val > 0)*/ val = 215 + val*4;
-  		  analogWrite(pin, val);
-  		}
-  	  }
-  	}
+    	for (volatile int pin=0; pin<=53; pin++){
+    	  byte volatile val = Serial1.read();
+              if (pin == 18 || pin == 19 || pin == 34 || pin == 35 || pin == 36 || pin == 37) { continue; }
+    
+    	  if (pin > 14 || val == 0){
+      		digitalWrite(pin, val);
+    	  } else if (pin > 1) {
+      		if (val > 10) {
+      		  analogWrite(pin, val);
+      		} else {
+      		  /*if (val > 0)*/ val = 215 + val*4;
+      		  analogWrite(pin, val);
+      		}
+    	  }
+    	}
+      sonar();
     }
-
 }
